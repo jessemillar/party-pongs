@@ -19,11 +19,11 @@ function shade()
 	end
 end
 
--- Print white text with a dark blue outline
+-- Print outlined text
 function print_ol(s,_x,_y)
 	for x=-1,1 do
 		for y=-1,1 do
-			print(s,_x+x,_y+y,1)
+			print(s,_x+x,_y+y,12)
 		end
 	end
 
