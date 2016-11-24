@@ -3,47 +3,92 @@ version 8
 __lua__
 
 t=0 -- The timer for keeping track of things
-sur=64 -- The surface of the water
-jmp=15 -- Jump power
+surf=64 -- The surface of the water
+dens=9 -- The density of the background shading
+sun={x=62,y=72} -- Sun position for animating the sunset
+score=0 -- Keep track of the player's score
+
+-- Shade horizontal lines to show the sun going down
+function shade()
+	for i=0,128 do
+		for j=0,128 do
+			if(j%dens==1) then
+				pset(i,j,2)
+			end
+		end
+	end
+end
+
+-- Print white text with a dark blue outline
+function print_ol(s,_x,_y)
+	for x=-1,1 do
+		for y=-1,1 do
+			print(s,_x+x,_y+y,1)
+		end
+	end
+
+	print(s,_x,_y,7)
+end
+
+-- Print the score in the bottom-left corner of the screen
+function show_score()
+	print_ol("score:",2,121) -- Print "Score:"
+	print_ol(score,28,121) -- Print the score
+end
 
 function _init()
 	-- Set the transparency color to neon green
 	palt(0, false)
 	palt(11, true)
 
-	p={sp=1,x=15,y=sur}
-	m={x=0}
+	p={sp=1,x=15,y=surf} -- Place the penguin and his board
+	m={x=0} -- Set the initial map location (for animating water)
 end
 
 function _update()
 	t=t+1 -- Increment the timer
+	-- Add to the player's score
+	if(t%5==1) then
+		score+=1
+	end
 
-	if(t%12<3) then
+	-- Animate the penguin every few frames
+	if(t%20<10) then
 		p.sp=1
 	else
 		p.sp=2
 	end
 
+	-- Animate the water
 	if(m.x>-8) then
 		m.x-=1
 	else
 		m.x=-1
 	end
 
-	-- Keyboard controls
-	if btn(0) then m.x-=1 end
+	-- Slowly let the sun set
+	if(t%200==1) then
+		sun.y+=1
+	end
+	
+	-- Increase the shading as the sun sets
+	if(t%300==1 and dens>1) then
+		dens-=1
+	end
 end
 
 function _draw()
 	cls() -- Clear the screen
-	rectfill(0,0,128,71,8) -- Draw the top part of the sunset fill
+	rectfill(0,0,128,71,13) -- Draw the top part of the sunset fill
 	rectfill(0,25,128,71,14) -- Draw the middle part of the sunset fill
-	rectfill(0,50,128,71,2) -- Draw the bottom part of the sunset fill
-	circfill(62,70,25,8) -- Draw the sun
+	rectfill(0,50,128,71,15) -- Draw the bottom part of the sunset fill
+	shade() -- Add background shading
+	circfill(sun.x,sun.y,25,8) -- Draw the sun
 	map(0,0,m.x,0,128,128) -- Draw the map
 	spr(12,p.x-2,p.y+2) -- Draw the left half of the surfboard
 	spr(13,p.x+6,p.y+2) -- Draw the right half of the surfboard
 	spr(p.sp,p.x,p.y) -- Draw the penguin
+	show_score()
 end
 
 __gfx__
