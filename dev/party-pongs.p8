@@ -23,6 +23,7 @@ function _init()
 	water={x=0} -- Set the initial map location (for animating water)
 
 	enemies={} -- Make the array for keeping track of enemies
+	clouds={} -- Make an array for clouds
 
 	music() -- Play the music track
 end
@@ -39,6 +40,41 @@ function spawn_enemy()
 	}
 
 	add(enemies,enemy)
+end
+
+function spawn_cloud()
+	local x=140
+	local y=flr(rnd(40))
+
+	local cloud_front = {
+		sp=22,
+		x=x,
+		y=y,
+		dx=-1,
+		dy=0
+	}
+
+	add(clouds,cloud_front)
+
+	local cloud_middle = {
+		sp=23,
+		x=x+8,
+		y=y,
+		dx=-1,
+		dy=0
+	}
+
+	add(clouds,cloud_middle)
+
+	local cloud_back = {
+		sp=24,
+		x=x+16,
+		y=y,
+		dx=-1,
+		dy=0
+	}
+
+	add(clouds,cloud_back)
 end
 
 -- Shade horizontal lines to show the sun going down
@@ -71,11 +107,15 @@ function show_score()
 	print_ol(score,28,121) -- Print the score
 end
 
-function physics(obj)
-	-- Apply momentum
+-- Apply momentum
+function movement(obj)
 	obj.x+=obj.dx
 	obj.y+=obj.dy
-	
+end
+
+function physics(obj)
+	movement(obj) -- Apply momentum
+
 	-- Make gravity stop when we're on the ground
 	if(obj.y<surface) then
 		obj.dy+=gravity
@@ -100,6 +140,11 @@ function _update()
 	-- Move enemies
 	for e in all(enemies) do
 		physics(e)
+	end
+
+	-- Move clouds
+	for c in all(clouds) do
+		movement(c)
 	end
 
 	-- Animate the penguin every few frames
@@ -132,8 +177,13 @@ function _update()
 	end
 	
 	-- Randomly spawn enemies
-	if(rnd(100)<3) then
+	if(flr(rnd(100))<3) then
 		spawn_enemy()
+	end
+
+	-- Randomly spawn clouds
+	if(flr(rnd(100))<2) then
+		spawn_cloud()
 	end
 
 	physics(penguin) -- Apply physics to the player to allow jumping
@@ -159,6 +209,11 @@ function _draw()
 	-- Draw enemies
 	for e in all(enemies) do
 		spr(e.sp,e.x,e.y)
+	end
+
+	-- Draw cs
+	for c in all(clouds) do
+		spr(c.sp,c.x,c.y)
 	end
 
 	-- Draw an ollie surfboard if jumping
