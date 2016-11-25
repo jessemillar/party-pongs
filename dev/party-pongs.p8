@@ -4,8 +4,8 @@ __lua__
 
 t=0 -- The timer for keeping track of things
 surface=64 -- The surface of the water
-density=9 -- The density of the background shading
-sun={x=62,y=72} -- Sun position for animating the sunset
+density=10 -- The density of the background shading
+sun={x=62,y=78} -- Sun position for animating the sunset
 score=0 -- Keep track of the player's score
 gravity=1 -- Gravity strength
 jump=9 -- Jump strength
@@ -27,13 +27,8 @@ function _init()
 	music() -- Play the music track
 end
 
-function log(message)
-	print(message,0,0)
-end
-
 function spawn_enemy()
 	sprites={14,15,30}
-
 
 	local enemy = {
 		sp=sprites[flr(rnd(#sprites)+1)],
@@ -47,11 +42,13 @@ function spawn_enemy()
 end
 
 -- Shade horizontal lines to show the sun going down
-function shade()
+function shade(color)
 	for i=0,128 do
 		for j=0,128 do
-			if(j%density==1) then
-				pset(i,j,2)
+			if(i%density==1) then
+				if(j%density==1) then	
+					pset(i,j,color)
+				end
 			end
 		end
 	end
@@ -121,14 +118,11 @@ function _update()
 
 	-- Slowly let the sun set
 	if(t%200==1) then
-		sun.y+=1
-	end
-	
-	-- Increase the shading as the sun sets
-	if(t%300==1 and density>1) then
+		sun.y+=2
 		density-=1
 	end
 	
+	-- Allow for jumping
 	if btn(2) then 
 		if(penguin.jumping==false) then
 			penguin.jumping=true
@@ -147,11 +141,19 @@ end
 
 function _draw()
 	cls() -- Clear the screen
-	rectfill(0,0,128,71,13) -- Draw the top part of the sunset fill
-	rectfill(0,25,128,71,14) -- Draw the middle part of the sunset fill
-	rectfill(0,50,128,71,15) -- Draw the bottom part of the sunset fill
-	shade() -- Add background shading
-	circfill(sun.x,sun.y,25,8) -- Draw the sun
+
+	if(density>0) then
+		if(density<2) then
+			rectfill(0,0,128,71,1) -- Draw the sky
+		else
+			rectfill(0,0,128,71,8) -- Draw the sky
+			circfill(sun.x,sun.y,25,9) -- Draw the sun
+			shade(8) -- Add background shading
+		end
+	else
+		rectfill(0,0,128,71,0) -- Draw the sky
+	end
+	
 	map(0,0,water.x,0,128,128) -- Draw the map
 
 	-- Draw enemies
