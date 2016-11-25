@@ -2,45 +2,62 @@ pico-8 cartridge // http://www.pico-8.com
 version 8
 __lua__
 
-t=0 -- The timer for keeping track of things
-state=1 -- The state of the game (moving between "rooms")
-surface=64 -- The surface of the water
-density=6 -- The density of the background shading
-sun={x=62,y=78} -- Sun position for animating the sunset
-score=0 -- Keep track of the player's score
-gravity=1 -- Gravity strength
-jump=9 -- Jump strength
+t=0 -- the timer for keeping track of things
+state=1 -- the state of the game (moving between "rooms")
+surface=64 -- the surface of the water
+density=6 -- the density of the background shading
+sun={x=62,y=78} -- sun position for animating the sunset
+score=0 -- keep track of the player's score
+gravity=1 -- gravity strength
+jump=9 -- jump strength
 
--- For choosing a different penguin
+-- for choosing a different penguin
 sp1=9
 sp2=10
 
-game_over=false -- Keep track of if we're alive or not
+game_over=false -- keep track of if we're alive or not
 
 function _init()
-	-- Set the transparency color to neon green
+	-- set the transparency color to neon green
 	palt(0, false)
 	palt(11, true)
 
-	penguin={sp=sp1,x=15,y=surface,dx=0,dy=0,jumping=false} -- Place the penguin and his board
-	water={x=0} -- Set the initial map location (for animating water)
+	penguin={sp=sp1,x=15,y=surface,dx=0,dy=0,jumping=false} -- place the penguin and his board
+	water={x=0} -- set the initial map location (for animating water)
 
-	enemies={} -- Make the array for keeping track of enemies
-	clouds={} -- Make an array for clouds
+	enemies={} -- make the array for keeping track of enemies
+	clouds={} -- make an array for clouds
 end
 
--- Check for collisions between two objects
+-- draw the game's title logo
+function draw_title()
+	local letters={48,49,50,51,52,48,53,54,55,56}
+
+	for i=1,count(letters) do
+		for j0=0,7 do
+			j = 7-j0
+			col = 7+j
+			t1 = t + i*4 - j*2
+			x = cos(t0)*5
+			y = 38 + j + cos(t1/50)*5
+			pal(7,col)
+			spr(letters[i], 8+i*8 + x, y)
+		end
+	end
+end
+
+-- check for collisions between two objects
 function check_collision(obj1,obj2)
-	if(obj2.x-4<obj1.x+4) then -- Check collisions on the penguin's right side
-		if(obj2.x+4>obj1.x-4) then -- Check the bottom edge
-			if(obj2.y-4<obj1.y+4) then -- Check the left edge
+	if(obj2.x-4<obj1.x+4) then -- check collisions on the penguin's right side
+		if(obj2.x+4>obj1.x-4) then -- check the bottom edge
+			if(obj2.y-4<obj1.y+4) then -- check the left edge
 				return true
 			end
 		end
 	end
 end
 
--- Spawn enemies
+-- spawn enemies
 function spawn_enemy()
 	sprites={14,15,30}
 
@@ -55,7 +72,7 @@ function spawn_enemy()
 	add(enemies,enemy)
 end
 
--- Spawn clouds
+-- spawn clouds
 function spawn_cloud()
 	local x=140
 	local y=flr(rnd(40))
@@ -91,7 +108,7 @@ function spawn_cloud()
 	add(clouds,cloud_back)
 end
 
--- Shade horizontal lines to show the sun going down
+-- shade horizontal lines to show the sun going down
 function shade(color)
 	for i=0,128 do
 		for j=0,128 do
@@ -102,7 +119,7 @@ function shade(color)
 	end
 end
 
--- Print outlined text
+-- print outlined text
 function print_ol(s,_x,_y,text_color,outline_color)
 	for x=-1,1 do
 		for y=-1,1 do
@@ -113,28 +130,28 @@ function print_ol(s,_x,_y,text_color,outline_color)
 	print(s,_x,_y,text_color)
 end
 
--- Print centered outlined text
+-- print centered outlined text
 function print_ol_c(s,_y,text_color,outline_color)
 	print_ol(s,64-#s*4/2,_y,text_color,outline_color)
 end
 
--- Print the score in the bottom-left corner of the screen
+-- print the score in the bottom-left corner of the screen
 function show_score()
-	print_ol("score:",2,121,7,4) -- Print "score:"
-	print_ol(score,28,121,7,4) -- Print the score
+	print_ol("score:",2,121,7,4) -- print "score:"
+	print_ol(score,28,121,7,4) -- print the score
 end
 
--- Apply momentum
+-- apply momentum
 function movement(obj)
 	obj.x+=obj.dx
 	obj.y+=obj.dy
 end
 
--- Apply momentum and gravity
+-- apply momentum and gravity
 function physics(obj)
-	movement(obj) -- Apply momentum
+	movement(obj) -- apply momentum
 
-	-- Make gravity stop when we're on the ground
+	-- make gravity stop when we're on the ground
 	if(obj.y<surface) then
 		obj.dy+=gravity
 	end
@@ -142,8 +159,8 @@ function physics(obj)
 	if(obj.y>surface) then
 		obj.y=surface
 		obj.dy=0
-		obj.jumping=false -- Log that we're not jumping anymore
-		sfx(3) -- Play a splash sound
+		obj.jumping=false -- log that we're not jumping anymore
+		sfx(3) -- play a splash sound
 	end
 end
 
@@ -153,45 +170,45 @@ function _update()
 			state=2
 			music()
 		end
-	elseif(state==2 and game_over==false) then -- Only run if it's not game over
-		t=t+1 -- Increment the timer
+	elseif(state==2 and game_over==false) then -- only run if it's not game over
+		t=t+1 -- increment the timer
 		
-		-- Add to the player's score
+		-- add to the player's score
 		if(t%5==1) then
 			score+=1
 		end
 
-		-- Move enemies
+		-- move enemies
 		for e in all(enemies) do
 			physics(e)
 		end
 
-		-- Move clouds
+		-- move clouds
 		for c in all(clouds) do
 			movement(c)
 		end
 
-		-- Animate the penguin every few frames
+		-- animate the penguin every few frames
 		if(t%20<10) then
 			penguin.sp=sp1
 		else
 			penguin.sp=sp2
 		end
 
-		-- Animate the water
+		-- animate the water
 		if(water.x>-8) then
 			water.x-=2
 		else
 			water.x=-2
 		end
 
-		-- Slowly let the sun set
+		-- slowly let the sun set
 		if(t%200==1) then
 			sun.y+=2
 			density-=1
 		end
 		
-		-- Allow for jumping
+		-- allow for jumping
 		if(btn(2)) then 
 			if(penguin.jumping==false) then
 				penguin.jumping=true
@@ -204,24 +221,24 @@ function _update()
 			end
 		end
 		
-		-- Randomly spawn enemies
+		-- randomly spawn enemies
 		if(flr(rnd(100))<3) then
 			spawn_enemy()
 		end
 
-		-- Randomly spawn clouds
+		-- randomly spawn clouds
 		if(flr(rnd(100))<2) then
 			spawn_cloud()
 		end
 
-		physics(penguin) -- Apply physics to the player to allow jumping
+		physics(penguin) -- apply physics to the player to allow jumping
 
-		-- Check for player/enemy collisions
+		-- check for player/enemy collisions
 		for e in all(enemies) do
 			if(check_collision(penguin,e)) then
-				-- For some reason, I can't break the game over code into its own function
-				music(-1) -- Stop the music
-				sfx(7) -- Play the death sound
+				-- for some reason, i can't break the game over code into its own function
+				music(-1) -- stop the music
+				sfx(7) -- play the death sound
 				game_over=true
 			end
 		end
@@ -240,45 +257,46 @@ function _update()
 end
 
 function _draw()
-	cls() -- Clear the screen
+	cls() -- clear the screen
 
-	if(state==1) then -- Show title screen
+	if(state==1) then -- show title screen
+		draw_title()
 		print_ol_c("press x to start",64,7,2)
 	elseif(state==2) then
 		if(density>0) then
 			if(density<2) then
-				rectfill(0,0,128,71,1) -- Draw the sky
+				rectfill(0,0,128,71,1) -- draw the sky
 			else
-				rectfill(0,0,128,71,8) -- Draw the sky
-				circfill(sun.x,sun.y,25,9) -- Draw the sun
-				shade(8) -- Add background shading
+				rectfill(0,0,128,71,8) -- draw the sky
+				circfill(sun.x,sun.y,25,9) -- draw the sun
+				shade(8) -- add background shading
 			end
 		else
-			rectfill(0,0,128,71,0) -- Draw the sky
+			rectfill(0,0,128,71,0) -- draw the sky
 		end
 		
-		map(0,0,water.x,0,128,128) -- Draw the map
+		map(0,0,water.x,0,128,128) -- draw the map
 
-		-- Draw enemies
+		-- draw enemies
 		for e in all(enemies) do
 			spr(e.sp,e.x,e.y)
 		end
 
-		-- Draw clouds
+		-- draw clouds
 		for c in all(clouds) do
 			spr(c.sp,c.x,c.y)
 		end
 
-		-- Draw an ollie surfboard if jumping and a normal one otherwise
+		-- draw an ollie surfboard if jumping and a normal one otherwise
 		if(penguin.jumping==false) then
-			spr(12,penguin.x-2,penguin.y+2) -- Draw the left half of the surfboard
-			spr(13,penguin.x+6,penguin.y+2) -- Draw the right half of the surfboard
+			spr(12,penguin.x-2,penguin.y+2) -- draw the left half of the surfboard
+			spr(13,penguin.x+6,penguin.y+2) -- draw the right half of the surfboard
 		else
 			spr(28,penguin.x-2,penguin.y+5)
 			spr(29,penguin.x+6,penguin.y+5)
 		end
 
-		spr(penguin.sp,penguin.x,penguin.y) -- Draw the penguin
+		spr(penguin.sp,penguin.x,penguin.y) -- draw the penguin
 		show_score()
 
 		if(game_over==true) then
@@ -313,14 +331,14 @@ ffffffffffffffffbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 f4ffff4ffff4ffffbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 fffffffffffff4ffbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 fff4ffff4fffffffbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+b777777bb777777bb777777bb777777bb77bb77bb777777bb77bb77bb777777bb777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+b777777bb777777bb777777bb777777bb77bb77bb777777bb77bb77bb777777bb777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+b77bb77bb77bb77bb77bb77bbbb77bbbb77bb77bb77bb77bb777b77bb77bbbbbb77bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+b777777bb777777bb7777bbbbbb77bbbb777777bb77bb77bb777777bb77bbbbbb777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+b777777bb777777bb7777bbbbbb77bbbb777777bb77bb77bb777777bb77b777bb777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+b77bbbbbb77bb77bb77bb77bbbb77bbbbbb77bbbb77bb77bb77b777bb77bb77bbbbbb77bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+b77bbbbbb77bb77bb77bb77bbbb77bbbbbb77bbbb777777bb77bb77bb777777bb777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+b77bbbbbb77bb77bb77bb77bbbb77bbbbbb77bbbb777777bb77bb77bb777777bb777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
