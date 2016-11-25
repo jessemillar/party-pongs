@@ -11,8 +11,10 @@ gravity=1 -- Gravity strength
 jump=9 -- Jump strength
 
 -- For choosing a different penguin
-sp1=5
-sp2=6
+sp1=9
+sp2=10
+
+game_over=false -- Keep track of if we're alive or not
 
 function _init()
 	-- Set the transparency color to neon green
@@ -28,6 +30,18 @@ function _init()
 	music() -- Play the music track
 end
 
+-- Check for collisions between two objects
+function check_collision(obj1,obj2)
+	if(obj2.x-4<obj1.x+4) then -- Check collisions on the penguin's right side
+		if(obj2.x+4>obj1.x-4) then -- Check the bottom edge
+			if(obj2.y-4<obj1.y+4) then -- Check the left edge
+				return true
+			end
+		end
+	end
+end
+
+-- Spawn enemies
 function spawn_enemy()
 	sprites={14,15,30}
 
@@ -42,6 +56,7 @@ function spawn_enemy()
 	add(enemies,enemy)
 end
 
+-- Spawn clouds
 function spawn_cloud()
 	local x=140
 	local y=flr(rnd(40))
@@ -91,20 +106,25 @@ function shade(color)
 end
 
 -- Print outlined text
-function print_ol(s,_x,_y)
+function print_ol(s,_x,_y,text_color,outline_color)
 	for x=-1,1 do
 		for y=-1,1 do
-			print(s,_x+x,_y+y,15)
+			print(s,_x+x,_y+y,outline_color)
 		end
 	end
 
-	print(s,_x,_y,4)
+	print(s,_x,_y,text_color)
+end
+
+-- Print centered outlined text
+function print_ol_c(s,_y,text_color,outline_color)
+	print_ol(s,64-#s*4/2,_y,text_color,outline_color)
 end
 
 -- Print the score in the bottom-left corner of the screen
 function show_score()
-	print_ol("score:",2,121) -- Print "Score:"
-	print_ol(score,28,121) -- Print the score
+	print_ol("score:",2,121,7,4) -- Print "score:"
+	print_ol(score,28,121,7,4) -- Print the score
 end
 
 -- Apply momentum
@@ -130,63 +150,76 @@ function physics(obj)
 end
 
 function _update()
-	t=t+1 -- Increment the timer
-	
-	-- Add to the player's score
-	if(t%5==1) then
-		score+=1
-	end
-
-	-- Move enemies
-	for e in all(enemies) do
-		physics(e)
-	end
-
-	-- Move clouds
-	for c in all(clouds) do
-		movement(c)
-	end
-
-	-- Animate the penguin every few frames
-	if(t%20<10) then
-		penguin.sp=sp1
-	else
-		penguin.sp=sp2
-	end
-
-	-- Animate the water
-	if(water.x>-8) then
-		water.x-=2
-	else
-		water.x=-2
-	end
-
-	-- Slowly let the sun set
-	if(t%200==1) then
-		sun.y+=2
-		density-=1
-	end
-	
-	-- Allow for jumping
-	if btn(2) then 
-		if(penguin.jumping==false) then
-			penguin.jumping=true
-			sfx(0) 
-			penguin.dy-=jump
+	if(game_over==false) then -- Only run if it's not game over
+		t=t+1 -- Increment the timer
+		
+		-- Add to the player's score
+		if(t%5==1) then
+			score+=1
 		end
-	end
-	
-	-- Randomly spawn enemies
-	if(flr(rnd(100))<3) then
-		spawn_enemy()
-	end
 
-	-- Randomly spawn clouds
-	if(flr(rnd(100))<2) then
-		spawn_cloud()
-	end
+		-- Move enemies
+		for e in all(enemies) do
+			physics(e)
+		end
 
-	physics(penguin) -- Apply physics to the player to allow jumping
+		-- Move clouds
+		for c in all(clouds) do
+			movement(c)
+		end
+
+		-- Animate the penguin every few frames
+		if(t%20<10) then
+			penguin.sp=sp1
+		else
+			penguin.sp=sp2
+		end
+
+		-- Animate the water
+		if(water.x>-8) then
+			water.x-=2
+		else
+			water.x=-2
+		end
+
+		-- Slowly let the sun set
+		if(t%200==1) then
+			sun.y+=2
+			density-=1
+		end
+		
+		-- Allow for jumping
+		if btn(2) then 
+			if(penguin.jumping==false) then
+				penguin.jumping=true
+				sfx(0) 
+				penguin.dy-=jump
+			end
+		end
+		
+		-- Randomly spawn enemies
+		if(flr(rnd(100))<3) then
+			spawn_enemy()
+		end
+
+		-- Randomly spawn clouds
+		if(flr(rnd(100))<2) then
+			spawn_cloud()
+		end
+
+		physics(penguin) -- Apply physics to the player to allow jumping
+
+		-- Check for player/enemy collisions
+		for e in all(enemies) do
+			if(check_collision(penguin,e)) then
+				-- For some reason, I can't break the game over code into its own function
+				music(-1) -- Stop the music
+				sfx(7) -- Play the death sound
+				game_over=true
+			end
+		end
+	else
+	end
 end
 
 function _draw()
@@ -211,12 +244,12 @@ function _draw()
 		spr(e.sp,e.x,e.y)
 	end
 
-	-- Draw cs
+	-- Draw clouds
 	for c in all(clouds) do
 		spr(c.sp,c.x,c.y)
 	end
 
-	-- Draw an ollie surfboard if jumping
+	-- Draw an ollie surfboard if jumping and a normal one otherwise
 	if(penguin.jumping==false) then
 		spr(12,penguin.x-2,penguin.y+2) -- Draw the left half of the surfboard
 		spr(13,penguin.x+6,penguin.y+2) -- Draw the right half of the surfboard
@@ -227,6 +260,10 @@ function _draw()
 
 	spr(penguin.sp,penguin.x,penguin.y) -- Draw the penguin
 	show_score()
+
+	if(game_over==true) then
+		print_ol_c("game over",64,8,7)
+	end
 end
 
 __gfx__
@@ -402,7 +439,7 @@ __sfx__
 010d00000000000000186001860018620186001860018600186001860018600000001862000000186001860000000000000000000000186200000000000000000000000000186000000018620000000000000000
 010d00001b4201b4201b4200000018420000001842000000184201842018420000001842000000184200000016420000001842000000184201842018420000001f420000001d420000001b420000001d42000000
 010d00000c1300c1300c1300000018100000000c130000000f1300f1300f130000000f100000000f1300000008130081300813000000081300813008130000000713007130071300000000000000000000000000
-001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+011e00001c2471b2371a2271921700207006070060700305003050030000300003000030000300003000030000300003000030000300003000030000300000000000000000000000000000000000000000000000
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
