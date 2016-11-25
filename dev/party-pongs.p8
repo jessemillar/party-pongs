@@ -4,7 +4,7 @@ __lua__
 
 t=0 -- The timer for keeping track of things
 surface=64 -- The surface of the water
-density=10 -- The density of the background shading
+density=6 -- The density of the background shading
 sun={x=62,y=78} -- Sun position for animating the sunset
 score=0 -- Keep track of the player's score
 gravity=1 -- Gravity strength
@@ -96,10 +96,8 @@ end
 function shade(color)
 	for i=0,128 do
 		for j=0,128 do
-			if(i%density==1) then
-				if(j%density==1) then	
-					pset(i,j,color)
-				end
+			if(j%density==1) then	
+				pset(i,j,color)
 			end
 		end
 	end
@@ -133,6 +131,7 @@ function movement(obj)
 	obj.y+=obj.dy
 end
 
+-- Apply momentum and gravity
 function physics(obj)
 	movement(obj) -- Apply momentum
 
@@ -189,11 +188,15 @@ function _update()
 		end
 		
 		-- Allow for jumping
-		if btn(2) then 
+		if(btn(2)) then 
 			if(penguin.jumping==false) then
 				penguin.jumping=true
 				sfx(0) 
 				penguin.dy-=jump
+			else
+				if(penguin.dy>0) then
+					penguin.dy=1
+				end
 			end
 		end
 		
@@ -219,6 +222,16 @@ function _update()
 			end
 		end
 	else
+		if(btnp(5)) then
+			score=0
+			enemies={}
+			clouds={}
+			density=6
+			sun={x=62,y=78}
+			t=0
+			music()
+			game_over=false
+		end
 	end
 end
 
@@ -262,7 +275,8 @@ function _draw()
 	show_score()
 
 	if(game_over==true) then
-		print_ol_c("game over",64,8,7)
+		print_ol_c("game over",40,8,7)
+		print_ol_c("press x to play again",52,8,7)
 	end
 end
 
