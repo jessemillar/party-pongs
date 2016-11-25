@@ -3,29 +3,54 @@ version 8
 __lua__
 
 t=0 -- The timer for keeping track of things
-surf=64 -- The surface of the water
-dens=9 -- The density of the background shading
+surface=64 -- The surface of the water
+density=9 -- The density of the background shading
 sun={x=62,y=72} -- Sun position for animating the sunset
 score=0 -- Keep track of the player's score
-grav=1 -- Gravity strength
-jump=8 -- Jump strength
+gravity=1 -- Gravity strength
+jump=9 -- Jump strength
+
+-- For choosing a different penguin
+sp1=5
+sp2=6
 
 function _init()
 	-- Set the transparency color to neon green
 	palt(0, false)
 	palt(11, true)
 
-	p={sp=1,x=15,y=surf,mo={y=0},jump=false} -- Place the penguin and his board
-	m={x=0} -- Set the initial map location (for animating water)
+	penguin={sp=sp1,x=15,y=surface,dx=0,dy=0,jumping=false} -- Place the penguin and his board
+	water={x=0} -- Set the initial map location (for animating water)
 
-	music()
+	enemies={} -- Make the array for keeping track of enemies
+
+	music() -- Play the music track
+end
+
+function log(message)
+	print(message,0,0)
+end
+
+function spawn_enemy()
+	sprites={14,15,30}
+
+
+	local enemy = {
+		sp=sprites[flr(rnd(#sprites)+1)],
+		x=140,
+		y=surface,
+		dx=-3,
+		dy=0
+	}
+
+	add(enemies,enemy)
 end
 
 -- Shade horizontal lines to show the sun going down
 function shade()
 	for i=0,128 do
 		for j=0,128 do
-			if(j%dens==1) then
+			if(j%density==1) then
 				pset(i,j,2)
 			end
 		end
@@ -36,11 +61,11 @@ end
 function print_ol(s,_x,_y)
 	for x=-1,1 do
 		for y=-1,1 do
-			print(s,_x+x,_y+y,12)
+			print(s,_x+x,_y+y,15)
 		end
 	end
 
-	print(s,_x,_y,7)
+	print(s,_x,_y,4)
 end
 
 -- Print the score in the bottom-left corner of the screen
@@ -51,17 +76,18 @@ end
 
 function physics(obj)
 	-- Apply momentum
-	obj.y+=obj.mo.y
+	obj.x+=obj.dx
+	obj.y+=obj.dy
 	
 	-- Make gravity stop when we're on the ground
-	if(obj.y<surf) then
-		obj.mo.y+=grav
+	if(obj.y<surface) then
+		obj.dy+=gravity
 	end
 
-	if(obj.y>surf) then
-		obj.y=surf
-		obj.mo.y=0
-		obj.jump=false -- Log that we're not jumping anymore
+	if(obj.y>surface) then
+		obj.y=surface
+		obj.dy=0
+		obj.jumping=false -- Log that we're not jumping anymore
 		sfx(3) -- Play a splash sound
 	end
 end
@@ -74,18 +100,23 @@ function _update()
 		score+=1
 	end
 
+	-- Move enemies
+	for e in all(enemies) do
+		physics(e)
+	end
+
 	-- Animate the penguin every few frames
 	if(t%20<10) then
-		p.sp=1
+		penguin.sp=sp1
 	else
-		p.sp=2
+		penguin.sp=sp2
 	end
 
 	-- Animate the water
-	if(m.x>-8) then
-		m.x-=1
+	if(water.x>-8) then
+		water.x-=2
 	else
-		m.x=-1
+		water.x=-2
 	end
 
 	-- Slowly let the sun set
@@ -94,19 +125,24 @@ function _update()
 	end
 	
 	-- Increase the shading as the sun sets
-	if(t%300==1 and dens>1) then
-		dens-=1
+	if(t%300==1 and density>1) then
+		density-=1
 	end
 	
 	if btn(2) then 
-		if(p.jump==false) then
-			p.jump=true
+		if(penguin.jumping==false) then
+			penguin.jumping=true
 			sfx(0) 
-			p.mo.y-=jump
+			penguin.dy-=jump
 		end
 	end
+	
+	-- Randomly spawn enemies
+	if(rnd(100)<3) then
+		spawn_enemy()
+	end
 
-	physics(p)
+	physics(penguin) -- Apply physics to the player to allow jumping
 end
 
 function _draw()
@@ -116,10 +152,23 @@ function _draw()
 	rectfill(0,50,128,71,15) -- Draw the bottom part of the sunset fill
 	shade() -- Add background shading
 	circfill(sun.x,sun.y,25,8) -- Draw the sun
-	map(0,0,m.x,0,128,128) -- Draw the map
-	spr(12,p.x-2,p.y+2) -- Draw the left half of the surfboard
-	spr(13,p.x+6,p.y+2) -- Draw the right half of the surfboard
-	spr(p.sp,p.x,p.y) -- Draw the penguin
+	map(0,0,water.x,0,128,128) -- Draw the map
+
+	-- Draw enemies
+	for e in all(enemies) do
+		spr(e.sp,e.x,e.y)
+	end
+
+	-- Draw an ollie surfboard if jumping
+	if(penguin.jumping==false) then
+		spr(12,penguin.x-2,penguin.y+2) -- Draw the left half of the surfboard
+		spr(13,penguin.x+6,penguin.y+2) -- Draw the right half of the surfboard
+	else
+		spr(28,penguin.x-2,penguin.y+5)
+		spr(29,penguin.x+6,penguin.y+5)
+	end
+
+	spr(penguin.sp,penguin.x,penguin.y) -- Draw the penguin
 	show_score()
 end
 
@@ -129,25 +178,25 @@ b7bb7bb7bbbbbbbbbbbbbbbbbb555bbbbbbbbbbbb1661bbbbbbbbbbbbb555bbbbbbbbbbbbb777bbb
 bb7bb7bbbb888bbbbbbbbbbbb57090bbb55757bbb17090bb161111bbb57090bbb55757bbb77090bbb77777bbbbbaabbbbbbbbbbbbbbbbbbb777777eebb60666b
 b7bb7bb7b88888bbbb888bbbb57777bbb57090bbb57777bbb17090bbb22222bbb57090bbb77777bbb77090bbbbaaaabbbbbbbbbbbbbbbbbb777a77ee6666666b
 7bb7bb7bbb8090bbb88888bbb16777bbb16777bbb57777bbb57777bbb22222bbb22222bbbb777bbbb77777bbbbaaaabbbbbbbbbbbbbbbbbb7aaaa77ebb66666b
-bb7bb7bbbb5777bbbb8090bbb61777bbb61777bbb57777bbb57777bbb57777bbb22222bbb7777bbbbb777bbbbb9aa9bbbeeeeeeeeeeeeebb7aaaa777b566666b
-b7bb7bb7bb5777bbbb5777bbb17777bbb17777bbb57777bbb57777bbb57777bbb57777bbb77777bbb7777bbbbbb99bbbeeeeeeeeeeeebbbbbaaa777b5666666b
+bb7bb7bbbb5777bbbb8090bbb61777bbb61777bbb57777bbb57777bbb57777bbb22222bbb7777bbbbb777bbbbb9aa9bbbdddddddddddddbb7aaaa777b566666b
+b7bb7bb7bb5777bbbb5777bbb17777bbb17777bbb57777bbb57777bbb57777bbb57777bbb77777bbb7777bbbbbb99bbbddddddddddddbbbbbaaa777b5666666b
 7bb7bb7bbb5979bbbb5979bbb59779bbb59779bbb59779bbb59779bbb57979bbb57979bbb79779bbb79779bbbbbbbbbbbb22bbbbbbbbbbbbbb7777bb66666666
 c7c7c7c7cc77cccc77777777bbbbbbb77bbbbbbbbbbbbbbbbbbbbb77bb77bbbb777bbbbb7bbbbbbbbbbbbbb7bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-7cc77c7ccccccc7777777777bbbb77b77777bbbbbbbbbbbbbbb77777777777b7777777bb7bbbbbbbbbbbbbb7bbbbbbbbbbbbbbbbbbbbeebbbbbbbbbbbbbbbbbb
-7777c77777cccccc77777777bbbb77777777bbbbbb77bbbbb7777777777777777777777777bbbbbbbbbbbbb7bbbbbbbbbbbbbbbbbeeeebbbbbbbbbbbbbbbbbbb
-c77ccccccccccccc77777777bb7777777777b77bb7777bbbb77777777777777777777777777bbbbbbbbbbbb7bbbbbbbbbbbbbbeeeeebbbbbbbbbbbbbbbbbbbbb
-77cc777ccccc777c77777777b77777777777777b777777bb7777777777777777777777777777bbbbbbbbbb77bbbbbbbbbbbeeeeeebbbbbbbbbbbbbbbbbbbbbbb
-cccccccccccccccc77777777bb7777777777777b7777777b77777777777777777777777b77777bbbbbbbb777bbbbbbbbbeeeeebbbbbbbbbbbbbbbbbbbbbbbbbb
-777cccccc777cccc77777777b77777777777777bb777777bb777777777777777777777bb7777bbbbbbbbb777bbbbbbbbeee22bbbbbbbbbbbbbbbbbbbbbbbbbbb
-ccccc777ccccc77777777777777777777777777777777777bbb7777bb777bbbb7777bbbb777bbbbbbbbb7777bbbbbbbbbbb2bbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+7cc77c7ccccccc7777777777bbbb77b77777bbbbbbbbbbbbbbb77777777777b7777777bb7bbbbbbbbbbbbbb7bbbbbbbbbbbbbbbbbbbbddbbbbccccbbbbbbbbbb
+7777c77777cccccc77777777bbbb77777777bbbbbb77bbbbb7777777777777777777777777bbbbbbbbbbbbb7bbbbbbbbbbbbbbbbbddddbbbcc7c7ccbbbbbbbbb
+c77ccccccccccccc77777777bb7777777777b77bb7777bbbb77777777777777777777777777bbbbbbbbbbbb7bbbbbbbbbbbbbbdddddbbbbb7bb7cc7cbbbbbbbb
+77cc777ccccc777c77777777b77777777777777b777777bb7777777777777777777777777777bbbbbbbbbb77bbbbbbbbbbbddddddbbbbbbbbbbbccc7bbbbbbbb
+cccccccccccccccc77777777bb7777777777777b7777777b77777777777777777777777b77777bbbbbbbb777bbbbbbbbbdddddbbbbbbbbbbbbbb7cccbbbbbbbb
+777cccccc777cccc77777777b77777777777777bb777777bb777777777777777777777bb7777bbbbbbbbb777bbbbbbbbddd22bbbbbbbbbbbbb77ccccbbbbbbbb
+ccccc777ccccc77777777777777777777777777777777777bbb7777bb777bbbb7777bbbb777bbbbbbbbb7777bbbbbbbbbbb2bbbbbbbbbbbb77cc7cc7bbbbbbbb
+cc77ccccfffffff4bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+cccccc77ffffffffbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+7777c7f7f4ff4fffbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+7fff7ffffffffff4bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+ffffffffffffffffbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+f4ffff4ffff4ffffbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+fffffffffffff4ffbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+fff4ffff4fffffffbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
@@ -270,8 +319,8 @@ __map__
 1111111111111111111111111111111111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 1111111111111111111111111111111111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 1111111111111111111111111111111111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-1111111111111111111111111111111111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-1111111111111111111111111111111111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+2020202020202020202020202020202020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+2121212121212121212121212121212121000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
