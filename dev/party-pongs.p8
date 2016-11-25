@@ -3,6 +3,7 @@ version 8
 __lua__
 
 t=0 -- The timer for keeping track of things
+state=1 -- The state of the game (moving between "rooms")
 surface=64 -- The surface of the water
 density=6 -- The density of the background shading
 sun={x=62,y=78} -- Sun position for animating the sunset
@@ -26,8 +27,6 @@ function _init()
 
 	enemies={} -- Make the array for keeping track of enemies
 	clouds={} -- Make an array for clouds
-
-	music() -- Play the music track
 end
 
 -- Check for collisions between two objects
@@ -149,7 +148,12 @@ function physics(obj)
 end
 
 function _update()
-	if(game_over==false) then -- Only run if it's not game over
+	if(state==1) then
+		if(btnp(5)) then
+			state=2
+			music()
+		end
+	elseif(state==2 and game_over==false) then -- Only run if it's not game over
 		t=t+1 -- Increment the timer
 		
 		-- Add to the player's score
@@ -221,7 +225,7 @@ function _update()
 				game_over=true
 			end
 		end
-	else
+	elseif(game_over==true) then
 		if(btnp(5)) then
 			score=0
 			enemies={}
@@ -238,45 +242,49 @@ end
 function _draw()
 	cls() -- Clear the screen
 
-	if(density>0) then
-		if(density<2) then
-			rectfill(0,0,128,71,1) -- Draw the sky
+	if(state==1) then -- Show title screen
+		print_ol_c("press x to start",64,7,2)
+	elseif(state==2) then
+		if(density>0) then
+			if(density<2) then
+				rectfill(0,0,128,71,1) -- Draw the sky
+			else
+				rectfill(0,0,128,71,8) -- Draw the sky
+				circfill(sun.x,sun.y,25,9) -- Draw the sun
+				shade(8) -- Add background shading
+			end
 		else
-			rectfill(0,0,128,71,8) -- Draw the sky
-			circfill(sun.x,sun.y,25,9) -- Draw the sun
-			shade(8) -- Add background shading
+			rectfill(0,0,128,71,0) -- Draw the sky
 		end
-	else
-		rectfill(0,0,128,71,0) -- Draw the sky
-	end
-	
-	map(0,0,water.x,0,128,128) -- Draw the map
+		
+		map(0,0,water.x,0,128,128) -- Draw the map
 
-	-- Draw enemies
-	for e in all(enemies) do
-		spr(e.sp,e.x,e.y)
-	end
+		-- Draw enemies
+		for e in all(enemies) do
+			spr(e.sp,e.x,e.y)
+		end
 
-	-- Draw clouds
-	for c in all(clouds) do
-		spr(c.sp,c.x,c.y)
-	end
+		-- Draw clouds
+		for c in all(clouds) do
+			spr(c.sp,c.x,c.y)
+		end
 
-	-- Draw an ollie surfboard if jumping and a normal one otherwise
-	if(penguin.jumping==false) then
-		spr(12,penguin.x-2,penguin.y+2) -- Draw the left half of the surfboard
-		spr(13,penguin.x+6,penguin.y+2) -- Draw the right half of the surfboard
-	else
-		spr(28,penguin.x-2,penguin.y+5)
-		spr(29,penguin.x+6,penguin.y+5)
-	end
+		-- Draw an ollie surfboard if jumping and a normal one otherwise
+		if(penguin.jumping==false) then
+			spr(12,penguin.x-2,penguin.y+2) -- Draw the left half of the surfboard
+			spr(13,penguin.x+6,penguin.y+2) -- Draw the right half of the surfboard
+		else
+			spr(28,penguin.x-2,penguin.y+5)
+			spr(29,penguin.x+6,penguin.y+5)
+		end
 
-	spr(penguin.sp,penguin.x,penguin.y) -- Draw the penguin
-	show_score()
+		spr(penguin.sp,penguin.x,penguin.y) -- Draw the penguin
+		show_score()
 
-	if(game_over==true) then
-		print_ol_c("game over",40,8,7)
-		print_ol_c("press x to play again",52,8,7)
+		if(game_over==true) then
+			print_ol_c("game over",40,8,7)
+			print_ol_c("press x to play again",52,8,7)
+		end
 	end
 end
 
