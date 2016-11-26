@@ -29,23 +29,6 @@ function _init()
 	clouds={} -- make an array for clouds
 end
 
--- draw the game's title logo
-function draw_title()
-	local letters={48,49,50,51,52,48,53,54,55,56}
-
-	for i=1,count(letters) do
-		for j0=0,7 do
-			j = 7-j0
-			col = 7+j
-			t1 = t + i*4 - j*2
-			x = cos(t0)*5
-			y = 38 + j + cos(t1/50)*5
-			pal(7,col)
-			spr(letters[i], 8+i*8 + x, y)
-		end
-	end
-end
-
 -- check for collisions between two objects
 function check_collision(obj1,obj2)
 	if(obj2.x-4<obj1.x+4) then -- check collisions on the penguin's right side
@@ -260,7 +243,6 @@ function _draw()
 	cls() -- clear the screen
 
 	if(state==1) then -- show title screen
-		draw_title()
 		print_ol_c("press x to start",64,7,2)
 	elseif(state==2) then
 		if(density>0) then
@@ -332,12 +314,12 @@ f4ffff4ffff4ffffbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 fffffffffffff4ffbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 fff4ffff4fffffffbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 b777777bb777777bb777777bb777777bb77bb77bb777777bb77bb77bb777777bb777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-b777777bb777777bb777777bb777777bb77bb77bb777777bb77bb77bb777777bb777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+b77bb77bb77bb77bb77bb77bbbb77bbbb77bb77bb77bb77bb77bb77bb77bb77bb77bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+b77bb77bb77bb77bb77bb77bbbb77bbbb77bb77bb77bb77bb77bb77bb77bb77bb77bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 b77bb77bb77bb77bb77bb77bbbb77bbbb77bb77bb77bb77bb777b77bb77bbbbbb77bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-b777777bb777777bb7777bbbbbb77bbbb777777bb77bb77bb777777bb77bbbbbb777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 b777777bb777777bb7777bbbbbb77bbbb777777bb77bb77bb777777bb77b777bb777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 b77bbbbbb77bb77bb77bb77bbbb77bbbbbb77bbbb77bb77bb77b777bb77bb77bbbbbb77bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-b77bbbbbb77bb77bb77bb77bbbb77bbbbbb77bbbb777777bb77bb77bb777777bb777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+b77bbbbbb77bb77bb77bb77bbbb77bbbbbb77bbbb77bb77bb77bb77bb77bb77bbbbbb77bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 b77bbbbbb77bb77bb77bb77bbbb77bbbbbb77bbbb777777bb77bb77bb777777bb777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
