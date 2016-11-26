@@ -222,6 +222,11 @@ function _update()
 		-- move enemies
 		for e in all(enemies) do
 			physics(e)
+
+			-- remove enemies that make it off the screen
+			if(e.x<-8) then
+				del(enemies,e)
+			end
 		end
 
 		-- move coins and check for collisions with the player
@@ -233,11 +238,21 @@ function _update()
 				del(coins,c) -- remove the coin from the game
 				score+=10 -- increase the player's score
 			end
+			
+			-- remove coins that make it off the screen
+			if(c.x<-8) then
+				del(coins,c)
+			end
 		end
 
 		-- move clouds
 		for c in all(clouds) do
 			movement(c)
+			
+			-- remove clouds that make it off the screen
+			if(c.x<-8) then
+				del(clouds,c)
+			end
 		end
 
 		-- animate the penguin every few frames
