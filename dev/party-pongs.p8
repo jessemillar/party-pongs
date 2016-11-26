@@ -14,7 +14,7 @@ pongs={pablo={sp=1},gregory={sp=3},bernard={sp=5},melissa={sp=5},lewis={sp=7}} -
 -- for choosing a different penguin
 selected=3
 enemy_spawn_rate=3 -- allow for making the game more difficult over time
-
+high_score=0 -- save the highest score for the session
 game_over=false -- keep track of if we're alive or not
 
 function _init()
@@ -145,8 +145,13 @@ end
 
 -- print the score in the bottom-left corner of the screen
 function show_score()
-	print_ol("score:",2,121,7,4) -- print "score:"
-	print_ol(score,28,121,7,4) -- print the score
+	print_ol("score:",4,119,7,4) -- print "score:"
+	print_ol(score,29,119,7,4) -- print the score
+
+	if(game_over==true) then
+		print_ol("high score:",4,105,7,12) -- print "high score:"
+		print_ol(score,49,105,7,12) -- print the high score for the session
+	end
 end
 
 -- apply momentum
@@ -327,9 +332,14 @@ function _update()
 			end
 		end
 	elseif(game_over==true) then
+		if(score>high_score) then
+			high_score=score
+		end
+
 		if(btnp(5)) then
 			-- reset back to the starting values
 			score=0
+			enemy_spawn_rate=3
 			penguin.y=surface
 			penguin.jumping=false
 			enemies={}
@@ -417,7 +427,7 @@ function _draw()
 		end
 
 		spr(penguin.sp,penguin.x,penguin.y) -- draw the penguin
-		show_score()
+		show_score() -- show the score
 
 		if(game_over==true) then
 			print_ol_c("game over",40,8,7)
