@@ -350,6 +350,7 @@ function _draw()
 		map(0,16,0,0,128,128) -- draw the map
 		draw_title()	
 		print_ol_c("press x to start",75,7,2)
+		print_ol_c("use up arrow to jump",85,7,2)
 	elseif(state==2) then -- character select
 		map(16,16,0,0,128,128) -- draw the map
 
