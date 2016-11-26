@@ -12,8 +12,7 @@ gravity=1 -- gravity strength
 jump=9 -- jump strength
 
 -- for choosing a different penguin
-sp1=9
-sp2=10
+selected=3
 
 game_over=false -- keep track of if we're alive or not
 
@@ -22,7 +21,7 @@ function _init()
 	palt(0, false)
 	palt(11, true)
 
-	penguin={sp=sp1,x=15,y=surface,dx=0,dy=0,jumping=false} -- place the penguin and his board
+	penguin={sp=selected,x=15,y=surface,dx=0,dy=0,jumping=false} -- place the penguin and his board
 	water={x=0} -- set the initial map location (for animating water)
 
 	enemies={} -- make the array for keeping track of enemies
@@ -165,9 +164,23 @@ end
 function _update()
 	t=t+1 -- increment the timer
 
-	if(state==1) then
-		if(btnp(5)) then
+	if(state==1) then -- title screen
+		if(btnp(5)) then -- press x to continue
 			state=2
+		end
+	elseif(state==2) then -- character select
+		-- move left
+		if(btnp(0) and selected>1) then
+			selected-=1
+		end
+
+		-- move right
+		if(btnp(1) and selected<5) then
+			selected+=1
+		end
+
+		if(btnp(5)) then
+			state=3
 		end
 	elseif(state==3 and game_over==false) then -- only run if it's not game over
 		music()
@@ -189,9 +202,9 @@ function _update()
 
 		-- animate the penguin every few frames
 		if(t%20<10) then
-			penguin.sp=sp1
+			penguin.sp=selected*2-1
 		else
-			penguin.sp=sp2
+			penguin.sp=selected*2
 		end
 
 		-- animate the water
@@ -265,27 +278,37 @@ function _draw()
 	elseif(state==2) then -- character select
 		map(16,16,0,0,128,128) -- draw the map
 
-		spr(1,64-24,64)
-		spr(3,64-12,64)
+		-- draw shadows for the pongs
+		spr(37,64-32,64+2)
+		spr(37,64-17,64+2)
+		spr(37,64-1,64+2)
+		spr(37,64+15,64+2)
+		spr(37,64+31,64+2)
+
+		-- draw the pongs
+		spr(1,64-32,64)
+		spr(3,64-16,64)
 		spr(5,64,64)
-		spr(7,64+12,64)
-		spr(9,64+24,64)
+		spr(7,64+16,64)
+		spr(9,64+32,64)
+
+		x=(selected-1)*2*8+64-32 -- position the selection cursor
 
 		if(t%10<5) then
-			spr(38,64,64+8) -- draw the selection cursor
+			spr(38,x,64+10) -- draw the selection cursor
 		else
-			spr(38,64,64+10) -- draw the selection cursor
+			spr(38,x,64+12) -- draw the selection cursor
 		end
 
-		print_ol_c("select a pong",85,7,2)
+		print_ol_c("select a pong with x",85,7,4)
 	elseif(state==3) then -- gameplay
 		if(density>0) then
 			if(density<2) then
 				rectfill(0,0,128,71,1) -- draw the sky
 			else
-				rectfill(0,0,128,71,8) -- draw the sky
-				circfill(sun.x,sun.y,25,9) -- draw the sun
-				shade(8) -- add background shading
+				rectfill(0,0,128,71,9) -- draw the sky
+				circfill(sun.x,sun.y,25,10) -- draw the sun
+				shade(9) -- add background shading
 			end
 		else
 			rectfill(0,0,128,71,0) -- draw the sky
@@ -341,12 +364,12 @@ cccccccccccccccc7777777700777777777777707777777077777777777777777777777b77777000
 ccccc777ccccc77777777777777777777777777777777777bbb7777bb777bbbb7777bbbb7770000000007777bbbbbbbbbbb2bbbbbbbbbbbb77cc7cc7bbbbbbbb
 cc77ccccfffffff7000000000000000000000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 cccccc77ffffffff000000000000000000000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-7777c7f7f7ff7fff000000000007000000000000bbbbbbbbbbb00bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-7fff7ffffffffff7000000000070700000070000bbbbbbbbbb0000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-ffffffffffffffff000000000007000000000000bbbbbbbbb000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-f7ffff7ffff7ffff000000000000000000000000b444444bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-fffffffffffff7ff00000000000000000000000044444444bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-fff7ffff7fffffff000000000000000000000000b444444bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+7777c7f7f7ff7fff000000000007000000000000bbbbbbbbbbb88bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+7fff7ffffffffff7000000000070700000070000bbbbbbbbbb8888bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+ffffffffffffffff000000000007000000000000bbbbbbbbb888888bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+f7ffff7ffff7ffff000000000000000000000000b000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+fffffffffffff7ff00000000000000000000000000000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+fff7ffff7fffffff000000000000000000000000b000000bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 b777777bb777777bb777777bb777777bb77bb77bb777777bb77bb77bb777777bb777777bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 b77bb77bb77bb77bb77bb77bbbb77bbbb77bb77bb77bb77bb77bb77bb77bb77bb77bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 b77bb77bb77bb77bb77bb77bbbb77bbbb77bb77bb77bb77bb77bb77bb77bb77bb77bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
