@@ -344,6 +344,7 @@ function _update()
 			penguin.jumping=false
 			enemies={}
 			clouds={}
+			coins={}
 			density=6
 			sun={x=62,y=78}
 			t=0
