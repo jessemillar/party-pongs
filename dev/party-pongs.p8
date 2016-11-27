@@ -386,6 +386,18 @@ function _draw()
 			spr(38,x,64+12) -- draw the selection cursor
 		end
 
+		if(selected==1) then
+			print_ol_c("pablo",7,7,12)
+		elseif(selected==2) then
+			print_ol_c("gregory",7,7,12)
+		elseif(selected==3) then
+			print_ol_c("bernard",7,7,12)
+		elseif(selected==4) then
+			print_ol_c("melissa",7,7,12)
+		elseif(selected==5) then
+			print_ol_c("lewis",7,7,12)
+		end
+			
 		print_ol_c("select a pong with x",85,7,4)
 	elseif(state==3) then -- gameplay
 		if(density>0) then
